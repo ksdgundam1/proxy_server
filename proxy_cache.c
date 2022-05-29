@@ -2,8 +2,8 @@
 // File Name		: proxy_cache.c					//
 // Date			: 2022/03/29					//
 // Os			: Ubuntu 16.04 LTS 64bits			//
-// Author		: Dong-Wook Kim					//
-// Student ID		: 2018706075					//
+// Author		: Venti						//
+// Student ID		: ??????????					//
 // ---------------------------------------------------------------------//
 // Title : System Programming Assingment #1-1 (proxy server)		//
 // Description : ???							//
