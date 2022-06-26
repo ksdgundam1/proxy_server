@@ -1,11 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
 // File Name		: proxy_cache.c					//
-// Date			: 2022/03/29					//
+// Date			: 2022/06/26					//
 // Os			: Ubuntu 16.04 LTS 64bits			//
 // Author		: Venti						//
 // Student ID		: ??????????					//
 // ---------------------------------------------------------------------//
-// Title : System Programming Assingment #1-1 (proxy server)		//
+// Title:proxy server							//
 // Description : ???							//
 // ///////////////////////////////////////////////////////////////////////
 
@@ -21,12 +21,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <openssl/sha.h>				//SHA1()
+#include <time.h>
 
 char *sha1_hash(char *, char *);
 char *getHomeDir(char *home);
 
 void main(int argc, char argv[])
-{				
+{
+	int hit_time = 0, miss_time = 0;		//HIT/MISS 발생 횟수
+
+	int log;					//로그 파일과 연결된 file descriptor
+
+	char time_data[10];				//시간 정보를 저장할 문자열
+	time_t now, start, term;			//현재 시간 계산
+	struct tm *local_time;				//now 변수로부터 local time 계산
+
 	char home[50];					//home directory 경로 저장
 	struct passwd *usr_info = getpwuid(getuid());
 	strcpy(home, usr_info->pw_dir);
@@ -38,11 +47,19 @@ void main(int argc, char argv[])
 	char *directory_name = temp_dir;
 	char temp_file[39];				//hashed_url에서 추출한 file_name을 저장하기 위한 변수
 	char *file_name = temp_file;
-	
+
 	umask(0);					//이 프로그램을 통해 생성할 파일/디렉토리의 default 접근 권한 변경
+
+	mkdir("logfile", S_IRWXU | S_IRWXG | S_IRWXO);	//로그파일을 저장할 디렉토리 생성
+	chdir("logfile");
+	creat("logfile.txt", 0777);			//로그를 기록할 텍스트파일 생성
+	log = open("logfile.txt", O_RDWR);		//로그파일 open
+	chdir(home);
+
 	mkdir("cache", S_IRWXU | S_IRWXG | S_IRWXO);	//hashed_url을 통해 만든 파일/디렉토리를 저장할 cache 디렉토리 생성, 모든 권한 부여
 	chdir("./cache/");
 
+	time(&start);
 	while(1)
 	{	
 		char url[100];				//입력받은 url을 저장하기 위한 변수
@@ -97,19 +114,126 @@ void main(int argc, char argv[])
 			}
 			closedir(pCacheDir);
 	
-			if(HIT == 1) printf("HIT\n");
+			if(HIT == 1)
+			{	
+				time(&now);							//현재 시각 
+				local_time = localtime(&now);
+				//로그 파일에 HIT이 발생한 시각과 URL 기록
+				write(log, "[HIT]", 5);
+				write(log, directory_name, strlen(directory_name));
+				write(log, "/", 1);
+
+				write(log, file_name, strlen(file_name));
+				write(log, "-[", 2);
+
+				sprintf(time_data, "%d", 1900 + local_time->tm_year);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, "/", 1);
+				sprintf(time_data, "%d", 1 + local_time->tm_mon);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, "/", 1);
+				sprintf(time_data, "%d", local_time->tm_mday);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, "/", 1);
+				sprintf(time_data, "%d", local_time->tm_hour);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, ":", 1);
+				sprintf(time_data, "%d", local_time->tm_min);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, ":", 1);
+				sprintf(time_data, "%d", local_time->tm_sec);
+				write(log, time_data, strlen(time_data));
+				time_data[0] = '\0';
+
+				write(log, "]\n", 2);
+				write(log, "[HIT]", 5);
+				write(log, pUrl, strlen(pUrl));
+				write(log, "\n", 1);
+
+				hit_time++;
+				printf("HIT\n");
+			}
+
 			else if(HIT != 1)			//MISS인 경우 해당 url을 디렉토리/파일 형태로 캐시 서버에 저장
 			{
-				printf("MISS\n");
+				local_time = localtime(&now);
+                                //로그 파일에 HIT이 발생한 시각과 URL 기록
+                                write(log, "[MISS]", 6);
+                                write(log, pUrl, strlen(pUrl));
+                                write(log, "-[", 2);
+
+                                sprintf(time_data, "%d", 1900 + local_time->tm_year);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, "/", 1);
+                                sprintf(time_data, "%d", 1 + local_time->tm_mon);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, "/", 1);
+                                sprintf(time_data, "%d", local_time->tm_mday);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, "/", 1);
+                                sprintf(time_data, "%d", local_time->tm_hour);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, ":", 1);
+                                sprintf(time_data, "%d", local_time->tm_min);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, ":", 1);
+                                sprintf(time_data, "%d", local_time->tm_sec);
+                                write(log, time_data, strlen(time_data));
+                                time_data[0] = '\0';
+
+                                write(log, "]\n", 2);
 
 				mkdir(directory_name, S_IRWXU | S_IRWXG | S_IRWXO);	//cache 디렉토리 하위에 directory_name 디렉토리 생성
 				chdir(directory_name);
 				creat(file_name, 0777);	//그 밑에 file_name 파일 생성
 				chdir("..");
+
+				miss_time++;
+				printf("MISS\n");
 			}				//escape하지 않고 bye가 입력될 때 까지 반복*/
 				
 		}
 	}
+
+	time(&term);
+	start = term - start;
+
+	write(log, "[Terminated] run time: ", 23);
+	sprintf(time_data, "%d", start);
+	write(log, time_data, strlen(time_data));
+	time_data[0] = '\0';
+
+	write(log, " sec. #request hit : ", 21);
+	sprintf(time_data, "%d", hit_time);
+	write(log, time_data, strlen(time_data));
+	time_data[0] = '\0';
+
+	write(log, ", miss : ", 9);
+	sprintf(time_data, "%d", miss_time);
+	write(log, time_data, strlen(time_data));
+	time_data[0] = '\0';
+
+	return 0;					//server operation end
 }
 
 char *sha1_hash(char *input_url, char *hashed_url)
