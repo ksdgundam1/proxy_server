@@ -8,3 +8,6 @@ Log files that record the operation of the server are also recorded in the log.t
 
 When testing this program, be sure to set up a manual proxy in your browser!
 The port used 39999, please enter your ip address! (use ifconfig)
+
+*26/06/2022 Update
+add log file for observating server operation
