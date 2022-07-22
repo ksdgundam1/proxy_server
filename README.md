@@ -11,3 +11,8 @@ The port used 39999, please enter your ip address! (use ifconfig)
 
 *26/06/2022 Update
 add log file for observating server operation
+
+*22/07/2022 Update
+add Connection to a Web server using the http protocol from a Firefox browser
+cached sites bring up existing information; otherwise, send http requests to the web server
+add signal that works If the program does not receive a response from web server within 10 seconds
